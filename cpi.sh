@@ -14,10 +14,25 @@ if [[ $1 == "install" ]]; then
         exit
     fi
     clear_cache &> /dev/null
-    echo -e "${yellow}[!]${reset} The package will download..."
-    wget "https://github.com/Strawberry-Software-Industries/cip/raw/main/$2.cip" -O "/var/cache/cpi/archive/$2.cip" &> /dev/null
-    unzip -q "/var/cache/cpi/archive/$2.cip" -d /var/cache/cpi/pkg/
-    cp -r /var/cache/cpi/pkg/* /
+    if [ -f "/var/cache/cpi/installed/$2" ]; then
+        echo "${red}[!]${reset} Package $2 is already installed."
+        exit
+    fi
+    echo -e "${yellow}[!]${reset} cpi will now download and install $2. Continue? [Yes/No]"
+    read -r -ep "" -i "" AGREE_PKG_INSTALL
+    if [[ $AGREE_PKG_INSTALL = "Yes" ]] || [[ $AGREE_PKG_INSTALL = "Y" ]] || [[ $AGREE_PKG_INSTALL = "yes" ]] || [[ $AGREE_PKG_INSTALL = "y" ]]; then
+        touch "/var/cache/cpi/installed/$2"
+        echo "pkg_installed" > "/var/cache/cpi/installed/$2"
+        echo -e "${green}[*]${reset} Downloading $2..."
+        wget "https://github.com/Strawberry-Software-Industries/cip/raw/main/$2.cip" -O "/var/cache/cpi/archive/$2.cip" &> /dev/null
+        echo -e "${green}[*]${reset} Extracting..."
+        unzip -q "/var/cache/cpi/archive/$2.cip" -d /var/cache/cpi/pkg/
+        echo -e "${green}[*]${reset} Copying Source Files..."
+        cp -r /var/cache/cpi/pkg/* /
+        echo -e "${green}Finsished${reset}"
+        sleep 1       
+    fi
+
 
 elif [[ $1 == "setup" ]]; then
     if [[ $(id -u) != 0  ]]; then
@@ -25,7 +40,9 @@ elif [[ $1 == "setup" ]]; then
         exit
     fi
     mkdir -p /var/cache/cpi/pkg/
+    mkdir -p /var/cache/cpi/installed/
     mkdir -p /var/cache/cpi/archive/
+
 
 elif [[ $1 == "cache-clean" ]]; then
     if [[ $(id -u) != 0  ]]; then
@@ -34,14 +51,25 @@ elif [[ $1 == "cache-clean" ]]; then
     fi
     clear_cache
 
+
 elif [[ $1 == "remove" ]]; then
+    if [ ! -d "/usr/include/$2" ]; then
+        echo "${red}[!]${reset} Package $2 is not installed."
+        exit
+    fi
+
+
     if [[ $(id -u) != 0  ]]; then
         echo -e "${red}E:${reset} Missing permission to remove the package! Please run as root."
         exit
     fi
-    sudo rm -rf "/usr/include/$2"
+    sudo rm /var/cache/cpi/installed/$2*
+    rm -rf "/usr/include/$2"
+
 
 elif [[ $1 == "sql" ]]; then
     conn
 
+else 
+echo "cpi"
 fi
