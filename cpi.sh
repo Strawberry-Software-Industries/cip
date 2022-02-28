@@ -6,7 +6,7 @@ import "colors"
 
 if [[ $1 == "install" ]]; then
     if [[ $2 == "" ]]; then
-        echo -e "${red}E:${reset} Missing URL to install"
+        echo -e "${red}E:${reset} Missing Package to install"
         exit
     fi
     if [[ $(id -u) != 0  ]]; then
@@ -53,6 +53,12 @@ elif [[ $1 == "cache-clean" ]]; then
 
 
 elif [[ $1 == "remove" ]]; then
+
+    if [[ $2 == "" ]]; then
+        echo -e "${red}E:${reset} Missing Package to remove"
+        exit
+    fi
+
     if [ ! -d "/usr/include/$2" ]; then
         echo "${red}[!]${reset} Package $2 is not installed."
         exit
@@ -63,8 +69,17 @@ elif [[ $1 == "remove" ]]; then
         echo -e "${red}E:${reset} Missing permission to remove the package! Please run as root."
         exit
     fi
-    sudo rm /var/cache/cpi/installed/$2*
-    rm -rf "/usr/include/$2"
+    echo -e "${yellow}[!]${reset} cpi will now remove $2. Continue? [Yes/No]"
+    read -r -ep "" -i "" AGREE_PKG_REMOVE
+    if [[ $AGREE_PKG_REMOVE = "Yes" ]] || [[ $AGREE_PKG_REMOVE = "Y" ]] || [[ $AGREE_PKG_REMOVE = "yes" ]] || [[ $AGREE_PKG_REMOVE = "y" ]]; then
+        echo -e "${green}[*]${reset} Removing $2..."
+        sudo rm /var/cache/cpi/installed/$2*
+        rm -rf "/usr/include/$2"
+        echo -e "${green}Finsished${reset}"
+        sleep 1       
+    fi
+
+    
 
 
 elif [[ $1 == "sql" ]]; then
